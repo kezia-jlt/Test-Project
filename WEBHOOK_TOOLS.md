@@ -176,20 +176,6 @@ npm run webhook:send ref123 SUCCESS SN999
 
 **Solution:**
 
-```sql
--- Connect to database
-psql -h 13.75.122.160 -p 5100 -U user_topup -d eceran_topup_h2h
-
--- Check transaction
-SELECT * FROM transactions WHERE ref_id = 'your_ref_id';
-
--- Check all recent transactions
-SELECT ref_id, product_code, status, created_at
-FROM transactions
-ORDER BY created_at DESC
-LIMIT 10;
-```
-
 ### ❌ "Connection refused"
 
 **Problem:** Webhook URL tidak bisa diakses
@@ -227,48 +213,8 @@ LIMIT 10;
 
 ### Check webhook status
 
-```sql
--- All unsent webhooks
-SELECT ref_id, status, product_code, webhook_sent, created_at
-FROM transactions
-WHERE status IN ('SUCCESS', 'FAILED')
-  AND (webhook_sent = false OR webhook_sent IS NULL)
-ORDER BY created_at DESC;
-
--- Webhook history
-SELECT
-  ref_id,
-  status,
-  webhook_sent,
-  webhook_timestamp,
-  webhook_response->>'status' as http_status
-FROM transactions
-WHERE webhook_timestamp IS NOT NULL
-ORDER BY webhook_timestamp DESC
-LIMIT 20;
-
--- Count pending webhooks
-SELECT COUNT(*) as pending_webhooks
-FROM transactions
-WHERE status IN ('SUCCESS', 'FAILED')
-  AND (webhook_sent = false OR webhook_sent IS NULL);
-```
 
 ### Manual database update (emergency)
-
-```sql
--- Mark webhook as sent
-UPDATE transactions
-SET webhook_sent = true,
-    webhook_timestamp = NOW()
-WHERE ref_id = 'your_ref_id';
-
--- Reset webhook flag (to resend)
-UPDATE transactions
-SET webhook_sent = false,
-    webhook_timestamp = NULL
-WHERE ref_id = 'your_ref_id';
-```
 
 ## 🔄 Workflow
 
@@ -297,17 +243,6 @@ npm run webhook:check
 
 ## 🛠️ Environment Variables
 
-```env
-# Required
-DIGIFLAZZ_WEBHOOK_URL=https://api.digiflazz.com/v1/seller/callback
-
-# Database (for transaction lookup)
-DB_HOST=13.75.122.160
-DB_PORT=5100
-DB_NAME=eceran_topup_h2h
-DB_USER=user_topup
-DB_PASSWORD=your_password
-```
 
 ## 📊 Monitoring Commands
 
@@ -343,3 +278,4 @@ psql -h 13.75.122.160 -p 5100 -U user_topup -d eceran_topup_h2h \
 
 **Version:** 1.0.0  
 **Last Updated:** November 2025
+
